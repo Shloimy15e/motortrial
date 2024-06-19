@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../Arduino1"
+		},
+		{
+			"name": "Motor trial",
+			"path": "."
+		},
+		{
+			"name": "Temperature project",
+			"path": "../Temperature project"
+		}
+	],
+	"settings": {}
+}
