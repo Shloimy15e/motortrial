@@ -1,16 +1,4 @@
 /*
- * SimpleReceiver.cpp
- *
- * Demonstrates receiving ONLY NEC protocol IR codes with IRremote
- * If no protocol is defined, all protocols (except Bang&Olufsen) are active.
- *
- *  This file is part of Arduino-IRremote https://github.com/Arduino-IRremote/Arduino-IRremote.
- *
- ************************************************************************************
- * MIT License
- */
-
-/*
  * Specify which protocol(s) should be used for decoding.
  * If no protocol is defined, all protocols (except Bang&Olufsen) are active.
  * This must be done before the #include <IRremote.hpp>
@@ -43,15 +31,12 @@
 #include <Wire.h>
 #include <Arduino.h>
 #include <Stepper.h>
-/*
- * This include defines the actual pin number for pins like IR_RECEIVE_PIN, IR_SEND_PIN for many different boards and architectures
- */
+//This include defines the actual pin number for pins like IR_RECEIVE_PIN, IR_SEND_PIN for many different boards and architectures
 #include "PinDefinitionsAndMore.h"
 #include <IRremote.hpp> // include the library
 #include <LiquidCrystal_I2C.h>
 
-Stepper stepper(2048, 8, 10, 9, 11);
-
+// Define the variables for the remote
 bool playing = false;
 unsigned long lastPlayToggle = 0;
 const unsigned long playToggleInterval = 500;
@@ -65,6 +50,9 @@ const uint32_t MINUS = 0x07;
 const uint32_t PLUS_200 = 0xD;
 const uint32_t MINUS_200 = 0x19; // PLUS 100 on the remote
 
+// Define the settings for the step motor
+Stepper stepper(2048, 8, 10, 9, 11);
+// Set the step motor speed
 int StepperSpeed = 4;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -85,14 +73,13 @@ void setup()
   // Set the step motor speed
   stepper.setSpeed(4);
   
-  // Initialize the LCD
+  // Initialize the LCD and print a welcome message
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
-  lcd.print("Hello Rachy!");
+  lcd.print("Hello Habibi!");
   lcd.setCursor(0, 1);
   lcd.print("I'm a robot!");
-  
 }
 
 void loop()
@@ -126,15 +113,14 @@ void loop()
     }
     Serial.println();
 
-    /*
-     * Finally, check the received data and perform actions according to the received command
-     */
+    
+    // Finally, check the received data and perform actions according to the received command
     if (IrReceiver.decodedIRData.command == FORWARD)
     {
       // Go forwards
       stepper.step(64);
     }
-    else if (IrReceiver.decodedIRData.command == BACKWARD)
+    else if (!playing && IrReceiver.decodedIRData.command == BACKWARD)
     {
       // Go backwards
       stepper.step(-64);
@@ -146,12 +132,13 @@ void loop()
       if (now - lastPlayToggle > playToggleInterval)
       {
         playing = !playing;
+        // Print to the serial console the new play state
         Serial.print("Play toggled to: ");
         Serial.println(playing ? "true" : "false");
         lastPlayToggle = now;
         if (!playing)
         {
-          // Clear the LCD
+          // Clear the LCD and print a response
           lcd.clear();
           lcd.setCursor(0, 0);
           lcd.print(F("I'm tired!"));
@@ -160,54 +147,61 @@ void loop()
         }
         else
         {
-          // Clear the LCD
+          // Clear the LCD and print a response
           lcd.clear();
           lcd.setCursor(0, 0);
           lcd.print(F("Let's go!"));
         }
       }
     }
-
+    // If the plus button is pressed and motor is running and speed is less than 16
     if (playing && (IrReceiver.decodedIRData.command == PLUS) && StepperSpeed < 16)
     {
+      // Increase the speed by 1
       StepperSpeed = StepperSpeed + 1;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
-      // Clear the LCD
+      // Clear the LCD and print a response
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print(F("Let's go faster!"));
     }
+    // If the minus button is pressed and motor is running and speed is more than 1
     else if (playing && (IrReceiver.decodedIRData.command == MINUS) && StepperSpeed > 1)
     {
+      // Decrease the speed by 1
       StepperSpeed = StepperSpeed - 1;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
-      // Clear the LCD
+      // Clear the LCD and print a response
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print(F("Whoo!"));
       lcd.setCursor(0, 1);
       lcd.print(F("Let's slow down!"));
     }
+    // If the plus 200 button is pressed and motor is running and speed is less than 16
     else if (playing && (IrReceiver.decodedIRData.command == PLUS_200) && StepperSpeed != 16)
     {
+      // Set speed to 16 (max speed)
       StepperSpeed = 16;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
-      // Clear the LCD
+      // Clear the LCD and print a response
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print(F("Wheee!"));
       lcd.setCursor(0, 1);
       lcd.print(F("Let's fly!"));
     }
+    // If the minus 200 button is pressed and motor is running and speed is more than 4
     else if (playing && (IrReceiver.decodedIRData.command == MINUS_200) && StepperSpeed != 4)
     {
+      // Set speed to 4
       StepperSpeed = 4;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
-      // Clear the LCD
+      // Clear the LCD and print a response
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print(F("Alright that's  "));
@@ -215,8 +209,11 @@ void loop()
       lcd.print(F("for now!"));
     }
   }
+
+  // If playing is true, move the motor
   if (playing)
   {
+    // Set the speed and move the motor
     stepper.setSpeed(StepperSpeed);
     stepper.step(16);
   }
