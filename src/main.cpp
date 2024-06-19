@@ -40,7 +40,7 @@
 // #define DEBUG               // Activate this for lots of lovely debug output from the decoders.
 
 // #define RAW_BUFFER_LENGTH  180  // Default is 112 if DECODE_MAGIQUEST is enabled, otherwise 100.
-
+#include <Wire.h>
 #include <Arduino.h>
 #include <Stepper.h>
 /*
@@ -48,6 +48,7 @@
  */
 #include "PinDefinitionsAndMore.h"
 #include <IRremote.hpp> // include the library
+#include <LiquidCrystal_I2C.h>
 
 Stepper stepper(2048, 8, 10, 9, 11);
 
@@ -66,6 +67,8 @@ const uint32_t MINUS_200 = 0x19; // PLUS 100 on the remote
 
 int StepperSpeed = 4;
 
+LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
+
 void setup()
 {
   Serial.begin(115200);
@@ -80,7 +83,16 @@ void setup()
   Serial.println(F("at pin " STR(IR_RECEIVE_PIN)));
 
   // Set the step motor speed
-  stepper.setSpeed(StepperSpeed);
+  stepper.setSpeed(4);
+  
+  // Initialize the LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Hello Rachy!");
+  lcd.setCursor(0, 1);
+  lcd.print("I'm a robot!");
+  
 }
 
 void loop()
@@ -119,12 +131,12 @@ void loop()
      */
     if (IrReceiver.decodedIRData.command == FORWARD)
     {
-      // do something
+      // Go forwards
       stepper.step(64);
     }
     else if (IrReceiver.decodedIRData.command == BACKWARD)
     {
-      // do something else
+      // Go backwards
       stepper.step(-64);
     }
     else if (IrReceiver.decodedIRData.command == BUTTON_PLAY)
@@ -137,6 +149,22 @@ void loop()
         Serial.print("Play toggled to: ");
         Serial.println(playing ? "true" : "false");
         lastPlayToggle = now;
+        if (!playing)
+        {
+          // Clear the LCD
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print(F("I'm tired!"));
+          lcd.setCursor(0, 1);
+          lcd.print(F("Goodbye!"));
+        }
+        else
+        {
+          // Clear the LCD
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print(F("Let's go!"));
+        }
       }
     }
 
@@ -145,24 +173,46 @@ void loop()
       StepperSpeed = StepperSpeed + 1;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
+      // Clear the LCD
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(F("Let's go faster!"));
     }
     else if (playing && (IrReceiver.decodedIRData.command == MINUS) && StepperSpeed > 1)
     {
       StepperSpeed = StepperSpeed - 1;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
+      // Clear the LCD
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(F("Whoo!"));
+      lcd.setCursor(0, 1);
+      lcd.print(F("Let's slow down!"));
     }
-    else if (playing && (IrReceiver.decodedIRData.command == PLUS_200) &&StepperSpeed != 16)
+    else if (playing && (IrReceiver.decodedIRData.command == PLUS_200) && StepperSpeed != 16)
     {
       StepperSpeed = 16;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
+      // Clear the LCD
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(F("Wheee!"));
+      lcd.setCursor(0, 1);
+      lcd.print(F("Let's fly!"));
     }
-    else if (playing && (IrReceiver.decodedIRData.command == MINUS_200) &&StepperSpeed != 4)
+    else if (playing && (IrReceiver.decodedIRData.command == MINUS_200) && StepperSpeed != 4)
     {
       StepperSpeed = 4;
       Serial.print("Speed set to: ");
       Serial.println(StepperSpeed);
+      // Clear the LCD
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(F("Alright that's  "));
+      lcd.setCursor(0, 1);
+      lcd.print(F("for now!"));
     }
   }
   if (playing)
